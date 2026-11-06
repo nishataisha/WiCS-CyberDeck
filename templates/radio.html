@@ -265,6 +265,10 @@
             text-align: right;
         }
 
+        .message.error {
+            color: var(--danger);
+        }
+
         footer {
             border-top: 1px solid var(--border);
             margin-top: 38px;
@@ -330,10 +334,11 @@
                 <h1>Radio Control</h1>
                 <p class="subtitle">
                     Select a frequency to access weather broadcasts and FM stations.
+                    Simulation mode: no audio output.
                 </p>
             </div>
 
-            <section class="now-playing">
+            <section class="now-playing" aria-live="polite" aria-atomic="true">
                 <div class="station-info">
                     <div class="label">Current Station</div>
                     <div class="frequency" id="current-frequency">---</div>
@@ -377,12 +382,12 @@
 
                 <div class="controls">
                     <button class="control-button play-button"
-                            id="play-button" disabled>
+                            id="play-button" type="button" disabled>
                         PLAY
                     </button>
 
                     <button class="control-button stop-button"
-                            id="stop-button" disabled>
+                            id="stop-button" type="button" disabled>
                         STOP
                     </button>
                 </div>
@@ -399,28 +404,14 @@
 
     </div>
 
+    <script id="radio-config" type="application/json">{{ radio_config | tojson }}</script>
     <script>
-        const noaaFrequencies = [
-            "162.400",
-            "162.425",
-            "162.450",
-            "162.475",
-            "162.500",
-            "162.525",
-            "162.550"
-        ];
-
-        // Temporary FM frequencies for the software demo.
-        const fmFrequencies = [
-            "88.5",
-            "91.3",
-            "96.5",
-            "98.3"
-        ];
-
-        let selectedFrequency = null;
-        let selectedType = null;
-        let isPlaying = false;
+        // Flask supplies the presets and the current state, including on reload.
+        const config = JSON.parse(
+            document.getElementById("radio-config").textContent
+        );
+        let state = config.initialState;
+        let requestPending = false;
 
         const currentFrequency =
             document.getElementById("current-frequency");
@@ -451,6 +442,10 @@
 
                 button.className = "station-button";
                 button.type = "button";
+                button.dataset.frequency = frequency;
+                button.dataset.type = type;
+                button.setAttribute("aria-pressed", "false");
+                button.setAttribute("aria-label", `${type} ${frequency} MHz`);
 
                 const channel = type === "NOAA"
                     ? `Channel ${index + 1}`
@@ -466,111 +461,105 @@
                 `;
 
                 button.addEventListener("click", () => {
-                    selectStation(frequency, type, button);
+                    selectStation(frequency, type);
                 });
 
                 container.appendChild(button);
             });
         }
 
-        function selectStation(frequency, type, button) {
-            selectedFrequency = frequency;
-            selectedType = type;
+        function renderState() {
+            currentFrequency.textContent = state.station
+                ? `${state.station} MHz`
+                : "---";
+            currentStation.textContent = state.station
+                ? `${state.type === "NOAA" ? "NOAA Weather Radio" : "FM Radio"} · ${state.station} MHz`
+                : "No station selected";
 
-            document.querySelectorAll(".station-button")
-                .forEach(btn => btn.classList.remove("active"));
+            playbackStatus.classList.toggle("playing", state.playing);
+            statusText.textContent = state.playing
+                ? "Playing (simulated)"
+                : state.station ? "Stopped" : "Standby";
 
-            button.classList.add("active");
+            document.querySelectorAll(".station-button").forEach(button => {
+                const selected = button.dataset.frequency === state.station
+                    && button.dataset.type === state.type;
+                button.classList.toggle("active", selected);
+                button.setAttribute("aria-pressed", String(selected));
+                button.disabled = requestPending;
+            });
 
-            currentFrequency.textContent = frequency + " MHz";
-            currentStation.textContent =
-                type === "NOAA"
-                    ? `NOAA Weather Radio · ${frequency} MHz`
-                    : `FM Radio · ${frequency} MHz`;
-
-            playButton.disabled = false;
-            stopButton.disabled = !isPlaying;
-
-            message.textContent = "Frequency selected. Press PLAY to tune.";
+            playButton.disabled = requestPending || !state.station || state.playing;
+            stopButton.disabled = requestPending || !state.playing;
         }
 
-        function updatePlaybackStatus(playing) {
-            isPlaying = playing;
-
-            playbackStatus.classList.toggle("playing", playing);
-
-            statusText.textContent = playing
-                ? "Playing"
-                : "Standby";
-
-            playButton.disabled = !selectedFrequency || playing;
-            stopButton.disabled = !playing;
-        }
-
-        async function playRadio() {
-            if (!selectedFrequency) return;
-
-            playButton.disabled = true;
-            message.textContent = "Connecting to radio...";
+        async function sendRadioRequest(url, method, pendingMessage) {
+            // Allow one action at a time so responses cannot arrive out of order.
+            if (requestPending) return;
+            requestPending = true;
+            renderState();
+            message.classList.remove("error");
+            message.textContent = pendingMessage;
 
             try {
-                const response = await fetch(
-                    `/radio/tune?freq=${encodeURIComponent(selectedFrequency)}&type=${selectedType}`
-                );
-
+                const response = await fetch(url, { method, cache: "no-store" });
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.error || "Unable to tune radio.");
+                    throw new Error(data.error || "Radio request failed. Please try again.");
                 }
 
-                updatePlaybackStatus(true);
-                message.textContent = data.message || "Tuning request successful.";
-
+                // Change the display only after Flask confirms the action.
+                state = data;
+                message.textContent = data.message;
             } catch (error) {
-                message.textContent = error.message;
-                playButton.disabled = false;
+                message.classList.add("error");
+                message.textContent = error instanceof TypeError
+                    || error instanceof SyntaxError
+                    ? "Cannot connect to the radio service. Check that Flask is running, then try again."
+                    : error.message;
+            } finally {
+                requestPending = false;
+                renderState();
             }
         }
 
-        async function stopRadio() {
-            stopButton.disabled = true;
-            message.textContent = "Stopping radio...";
+        function selectStation(frequency, type) {
+            const query = new URLSearchParams({ freq: frequency, type });
+            return sendRadioRequest(
+                `${config.urls.tune}?${query}`, "GET", "Tuning radio..."
+            );
+        }
 
-            try {
-                const response = await fetch("/radio/stop", {
-                    method: "POST"
-                });
+        function playRadio() {
+            if (!state.station || state.playing) return;
+            return sendRadioRequest(config.urls.play, "POST", "Starting radio...");
+        }
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || "Unable to stop radio.");
-                }
-
-                updatePlaybackStatus(false);
-                message.textContent = data.message || "Radio stopped.";
-
-            } catch (error) {
-                message.textContent = error.message;
-                stopButton.disabled = false;
-            }
+        function stopRadio() {
+            if (!state.playing) return;
+            return sendRadioRequest(config.urls.stop, "POST", "Stopping radio...");
         }
 
         playButton.addEventListener("click", playRadio);
         stopButton.addEventListener("click", stopRadio);
 
         createStationButtons(
-            noaaFrequencies,
+            config.noaaFrequencies,
             "NOAA",
             "noaa-stations"
         );
 
         createStationButtons(
-            fmFrequencies,
+            config.fmFrequencies,
             "FM",
             "fm-stations"
         );
+
+        renderState();
+        message.textContent = state.station
+            ? "Simulation mode: no audio output."
+            : "Select a station to start simulated playback.";
     </script>
 </body>
 </html>

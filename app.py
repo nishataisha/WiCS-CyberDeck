@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 
 app = Flask(__name__)
 
 current_station = None
+current_station_type = None
 is_playing = False
 
 NOAA_FREQUENCIES = [
@@ -23,6 +24,15 @@ FM_FREQUENCIES = [
 ]
 
 
+def radio_state():
+    # Temporary shared state for the simulated radio; no hardware is used.
+    return {
+        "station": current_station,
+        "type": current_station_type,
+        "playing": is_playing
+    }
+
+
 @app.route("/")
 def home():
     return redirect("/radio")
@@ -30,12 +40,23 @@ def home():
 
 @app.route("/radio")
 def radio():
-    return render_template("radio.html")
+    response = app.make_response(render_template("radio.html", radio_config={
+        "noaaFrequencies": NOAA_FREQUENCIES,
+        "fmFrequencies": FM_FREQUENCIES,
+        "initialState": radio_state(),
+        "urls": {
+            "tune": url_for("tune"),
+            "play": url_for("play"),
+            "stop": url_for("stop")
+        }
+    }))
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/radio/tune")
 def tune():
-    global current_station, is_playing
+    global current_station, current_station_type, is_playing
 
     freq = request.args.get("freq")
     station_type = request.args.get("type")
@@ -52,15 +73,36 @@ def tune():
         return jsonify({"error": "Invalid frequency."}), 400
 
     current_station = freq
+    current_station_type = station_type
     is_playing = True
 
-    print(f"Tuning to {freq} MHz ({station_type})")
+    print(f"Tuning to {freq} MHz ({station_type})", flush=True)
+
+    response = jsonify({
+        **radio_state(),
+        "status": "success",
+        "message": f"Tuning request sent to {freq} MHz."
+    })
+    # This existing GET route changes state, so each selection must reach Flask.
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.route("/radio/play", methods=["POST"])
+def play():
+    global is_playing
+
+    if current_station is None:
+        return jsonify({"error": "Select a station first."}), 400
+
+    is_playing = True
+
+    print(f"Playing {current_station} MHz ({current_station_type})", flush=True)
 
     return jsonify({
-        "status": "success",
-        "station": current_station,
-        "type": station_type,
-        "message": f"Tuning request sent to {freq} MHz."
+        **radio_state(),
+        "status": "playing",
+        "message": f"Playing {current_station} MHz (simulated)."
     })
 
 
@@ -70,11 +112,11 @@ def stop():
 
     is_playing = False
 
-    print("Radio stopped")
+    print("Radio stopped", flush=True)
 
     return jsonify({
+        **radio_state(),
         "status": "stopped",
-        "station": current_station,
         "message": "Radio stopped."
     })
 
