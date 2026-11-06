@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio | CyberDeck</title>
+
+    <style>
+        :root {
+            --background: #111714;
+            --surface: #19221d;
+            --surface-light: #202c25;
+            --border: #344239;
+            --accent: #a5b99c;
+            --accent-hover: #c0d0b7;
+            --text: #edf1eb;
+            --muted: #9aa69b;
+            --success: #9fc5a1;
+            --danger: #c98e87;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--background);
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+            padding: 40px 24px;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 42px;
+        }
+
+        .brand {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 3px;
+        }
+
+        .brand span {
+            color: var(--accent);
+        }
+
+        .system-label {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .page-heading {
+            margin-bottom: 30px;
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 400;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 9px;
+        }
+
+        .now-playing {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 28px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .station-info .label {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .frequency {
+            font-size: 35px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .station-name {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 7px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--muted);
+            border-radius: 50%;
+        }
+
+        .status.playing .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 9px var(--success);
+        }
+
+        .status.playing {
+            color: var(--success);
+        }
+
+        .radio-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 28px 30px;
+            margin-bottom: 22px;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 23px;
+        }
+
+        h2 {
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .section-description {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .section-tag {
+            color: var(--accent);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .station-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .station-button {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 17px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font: inherit;
+            text-align: center;
+        }
+
+        .station-button:hover {
+            border-color: var(--accent);
+            background: #29372e;
+        }
+
+        .station-button.active {
+            border-color: var(--accent);
+            background: #29372e;
+        }
+
+        .station-frequency {
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .station-detail {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 26px;
+        }
+
+        .control-button {
+            min-width: 125px;
+            padding: 13px 22px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .play-button {
+            background: var(--accent);
+            color: #172019;
+            border-color: var(--accent);
+        }
+
+        .play-button:hover {
+            background: var(--accent-hover);
+        }
+
+        .stop-button {
+            background: transparent;
+            color: var(--text);
+        }
+
+        .stop-button:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .message {
+            min-height: 20px;
+            margin-top: 18px;
+            font-size: 12px;
+            color: var(--muted);
+            text-align: right;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            margin-top: 38px;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        button:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 25px 16px;
+            }
+
+            .station-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .now-playing {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .controls {
+                justify-content: stretch;
+            }
+
+            .control-button {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .radio-section {
+                padding: 22px 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <header>
+            <div class="brand">CYBER<span>DECK</span></div>
+            <div class="system-label">Communications System</div>
+        </header>
+
+        <main>
+            <div class="page-heading">
+                <div class="eyebrow">Communications / Audio</div>
+                <h1>Radio Control</h1>
+                <p class="subtitle">
+                    Select a frequency to access weather broadcasts and FM stations.
+                </p>
+            </div>
+
+            <section class="now-playing">
+                <div class="station-info">
+                    <div class="label">Current Station</div>
+                    <div class="frequency" id="current-frequency">---</div>
+                    <div class="station-name" id="current-station">
+                        No station selected
+                    </div>
+                </div>
+
+                <div class="status" id="playback-status">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Standby</span>
+                </div>
+            </section>
+
+            <section class="radio-section">
+                <div class="section-heading">
+                    <div>
+                        <h2>NOAA Weather Radio</h2>
+                        <p class="section-description">
+                            National Weather Service broadcast frequencies
+                        </p>
+                    </div>
+                    <span class="section-tag">WEATHER</span>
+                </div>
+
+                <div class="station-grid" id="noaa-stations"></div>
+            </section>
+
+            <section class="radio-section">
+                <div class="section-heading">
+                    <div>
+                        <h2>FM Radio</h2>
+                        <p class="section-description">
+                            Select an FM broadcast frequency
+                        </p>
+                    </div>
+                    <span class="section-tag">FM</span>
+                </div>
+
+                <div class="station-grid" id="fm-stations"></div>
+
+                <div class="controls">
+                    <button class="control-button play-button"
+                            id="play-button" disabled>
+                        PLAY
+                    </button>
+
+                    <button class="control-button stop-button"
+                            id="stop-button" disabled>
+                        STOP
+                    </button>
+                </div>
+
+                <div class="message" id="message" role="status"
+                     aria-live="polite"></div>
+            </section>
+        </main>
+
+        <footer>
+            <span>CYBERDECK SYSTEM</span>
+            <span>RADIO MODULE</span>
+        </footer>
+
+    </div>
+
+    <script>
+        const noaaFrequencies = [
+            "162.400",
+            "162.425",
+            "162.450",
+            "162.475",
+            "162.500",
+            "162.525",
+            "162.550"
+        ];
+
+        // Temporary FM frequencies for the software demo.
+        const fmFrequencies = [
+            "88.5",
+            "91.3",
+            "96.5",
+            "98.3"
+        ];
+
+        let selectedFrequency = null;
+        let selectedType = null;
+        let isPlaying = false;
+
+        const currentFrequency =
+            document.getElementById("current-frequency");
+
+        const currentStation =
+            document.getElementById("current-station");
+
+        const playbackStatus =
+            document.getElementById("playback-status");
+
+        const statusText =
+            document.getElementById("status-text");
+
+        const message =
+            document.getElementById("message");
+
+        const playButton =
+            document.getElementById("play-button");
+
+        const stopButton =
+            document.getElementById("stop-button");
+
+        function createStationButtons(frequencies, type, containerId) {
+            const container = document.getElementById(containerId);
+
+            frequencies.forEach((frequency, index) => {
+                const button = document.createElement("button");
+
+                button.className = "station-button";
+                button.type = "button";
+
+                const channel = type === "NOAA"
+                    ? `Channel ${index + 1}`
+                    : "FM Broadcast";
+
+                button.innerHTML = `
+                    <span class="station-frequency">
+                        ${frequency}
+                    </span>
+                    <span class="station-detail">
+                        ${channel}
+                    </span>
+                `;
+
+                button.addEventListener("click", () => {
+                    selectStation(frequency, type, button);
+                });
+
+                container.appendChild(button);
+            });
+        }
+
+        function selectStation(frequency, type, button) {
+            selectedFrequency = frequency;
+            selectedType = type;
+
+            document.querySelectorAll(".station-button")
+                .forEach(btn => btn.classList.remove("active"));
+
+            button.classList.add("active");
+
+            currentFrequency.textContent = frequency + " MHz";
+            currentStation.textContent =
+                type === "NOAA"
+                    ? `NOAA Weather Radio · ${frequency} MHz`
+                    : `FM Radio · ${frequency} MHz`;
+
+            playButton.disabled = false;
+            stopButton.disabled = !isPlaying;
+
+            message.textContent = "Frequency selected. Press PLAY to tune.";
+        }
+
+        function updatePlaybackStatus(playing) {
+            isPlaying = playing;
+
+            playbackStatus.classList.toggle("playing", playing);
+
+            statusText.textContent = playing
+                ? "Playing"
+                : "Standby";
+
+            playButton.disabled = !selectedFrequency || playing;
+            stopButton.disabled = !playing;
+        }
+
+        async function playRadio() {
+            if (!selectedFrequency) return;
+
+            playButton.disabled = true;
+            message.textContent = "Connecting to radio...";
+
+            try {
+                const response = await fetch(
+                    `/radio/tune?freq=${encodeURIComponent(selectedFrequency)}&type=${selectedType}`
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Unable to tune radio.");
+                }
+
+                updatePlaybackStatus(true);
+                message.textContent = data.message || "Tuning request successful.";
+
+            } catch (error) {
+                message.textContent = error.message;
+                playButton.disabled = false;
+            }
+        }
+
+        async function stopRadio() {
+            stopButton.disabled = true;
+            message.textContent = "Stopping radio...";
+
+            try {
+                const response = await fetch("/radio/stop", {
+                    method: "POST"
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Unable to stop radio.");
+                }
+
+                updatePlaybackStatus(false);
+                message.textContent = data.message || "Radio stopped.";
+
+            } catch (error) {
+                message.textContent = error.message;
+                stopButton.disabled = false;
+            }
+        }
+
+        playButton.addEventListener("click", playRadio);
+        stopButton.addEventListener("click", stopRadio);
+
+        createStationButtons(
+            noaaFrequencies,
+            "NOAA",
+            "noaa-stations"
+        );
+
+        createStationButtons(
+            fmFrequencies,
+            "FM",
+            "fm-stations"
+        );
+    </script>
+</body>
+</html>
