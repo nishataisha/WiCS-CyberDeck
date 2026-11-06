@@ -1,0 +1,22 @@
+Radio Antenna 
+Nooelec NESDR SMArTee v2 Bundle - Premium RTL-SDR w/ Aluminum Enclosure, Bias Tee, 0.5PPM TCXO, SMA Input & 3 Antennas. RTL2832U & R820T2-Based
+
+https://www.nooelec.com/store/nesdr-smartee.html?srsltid=AYCX9vINQuh9_SEZo9VGGqj5kQ8koisna3qFiVWUgb2LkV0ZKJN9GVd8
+
+The complete setup:
+
+  Nooelec NESDR SMArTee v2 Bundle 
+
+  Nooelec USB dongle: USB connection transfers data and supplies power to the dongle.
+  Coaxial cable: Carries the received signal. Magnetic base: Holds the antenna mast in place.
+
+  Three interchangeable antennas (only one can be used at a time):
+
+       1. Silver – Telescopic Antenna: Adjustable antenna used for general radio reception,        	including FM radio and aircraft communications.
+	2. Black (Tall) – 433 MHz Antenna: Designed for receiving 433 MHz wireless signals, 	commonly used by IoT sensors, weather stations, and remote controls.
+	3. Black (Short) – UHF Antenna: Designed for higher-frequency signals (800–2200 MHz), 	including compatible cellular-band signals.
+
+All connected :
+ 
+Raspberry PI → Nooelec USB Dongle → Magnet Coaxial Cable → Antenna Mast 
+
