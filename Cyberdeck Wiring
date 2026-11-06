@@ -10,5 +10,6 @@
 	i2cdetect -y 1
 7.	It is a success if the output is as follows:
  
+**Refer to expected_output.png**
 
 If the grid is filled with dashes and there are no numbers, then the Pi cannot see the sensor.
