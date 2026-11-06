@@ -1,0 +1,36 @@
+Power budget:
+1) Make sure that a powerbank can run everything, and estimate battery life. 
+Raspberry pi : 5-7 W 7"
+ touchscreen: 2-5 W
+ Radio Dongle: 1.5W 
+USB SSD/flash drive: 1-3W 
+GPS Dongle: 0.3 W 
+Compass sensor: negligible I believe.
+
+ Total and distribution would be needed.
+Minimum:
+5 + 2 + 1.5 + 1 + 0.3 + 0.1 = 9.9 W
+Maximum:
+7 + 5 + 1.5 + 3 + 0.3 + 0.1 = 16.9 W
+Total estimated power requirement between 9.9watts and 16.9 watts
+2) Battery life math: 
+
+Powerbanks are rated in mAh at 3.7V. A 20,00 mAH bank holds 74 Wh
+ Assume about 80% is usable after conversion so 59 Wh 
+Runtime is usable Wh divided by total watts. so 5 hours in this case
+
+Convert mAh to Wh:
+power bank capacity: 20,000 mAh
+
+          20,000 / 1,000 = 20Ah
+          20Ah x 3.7 v = 74 Wh
+Account for power loss:
+Assume 80% is usable after conversion
+
+          74 x 0.80 = 59.2 Wh
+
+Calculate battery life 
+          Battery Life = (usable Wh / Total Watts)
+          59.2 / 13.4 = 4.42 
+
+roughly around 4.4 hours of battery life 
