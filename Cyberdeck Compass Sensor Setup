@@ -1,0 +1,102 @@
+//BMM150 3-Axis Magnetometer Interface for Raspberry Pi
+This repository contains the hardware documentation and Python implementation for interfacing a BMM150 3-axis magnetometer with a Raspberry Pi over I2C. 
+The script handles sensor wake-up, continuous measurement mode configuration, and bitwise reconstruction of the raw X, Y, and Z magnetic field data.
+
+//Hardware Requirements
+Raspberry Pi (Tested on standard 40-pin GPIO headers)
+BMM150 Magnetometer Breakout Board
+Female-to-Female Jumper Wires
+
+//Wiring Configuration
+Ensure the Raspberry Pi is completely powered off and unplugged before making these connections to prevent electrical shorts.
+
+//BMM150 Pin      Wire Color      Raspberry Pi GPIO Header      Pin Number
+VCC (3.3V)	      Purple	       3V3 Power	                  Pin 1
+GND	              Orange	       Ground	                      Pin 6
+SDA (Data)	      Blue	         GPIO 2 (SDA)	                Pin 3
+SCL (Clock)	      Yellow	       GPIO 3 (SCL)	                Pin 5
+INT	              Green	         Leave Disconnected	          N/A
+
+//System Setup
+1. Enable I2C on the Raspberry Pi
+Open a terminal (or connect via SSH) and launch the configuration tool:
+
+sudo raspi-config
+
+Navigate to Interfacing Options > I2C and select Yes to enable the ARM I2C interface.
+
+2. Install Dependencies
+Update your package list and install the I2C diagnostic tools alongside the Python SMBus library:
+
+sudo apt update
+sudo apt install i2c-tools python3-smbus
+
+3. Verify Hardware Connection
+Run an I2C bus scan to confirm the Pi detects the sensor:
+
+i2cdetect -y 1
+
+You should see 13 (0x13) appear in the output grid, which is the default I2C address for the BMM150.
+
+//Installation and Usage
+1. Clone this repository to your Raspberry Pi workspace:
+
+git clone <your-repository-url>
+cd <your-repository-name>
+
+2. Create the main Python script read_compass.py:
+import smbus
+import time
+
+bus = smbus.SMBus(1)
+BMM150_ADDR = 0x13
+
+# BMM150 Control Registers
+POWER_CONTROL_REG = 0x4B
+OP_MODE_REG = 0x4C
+DATA_X_LSB = 0x42
+
+def setup_sensor():
+    # Wake up from Suspend mode (Power Control bit 0 = 1)
+    bus.write_byte_data(BMM150_ADDR, POWER_CONTROL_REG, 0x01)
+    time.sleep(0.05)
+    
+    # Set to Normal mode for continuous measurement
+    bus.write_byte_data(BMM150_ADDR, OP_MODE_REG, 0x00)
+    time.sleep(0.05)
+
+def read_raw_data():
+    # Read 6 bytes of data starting from X_LSB (0x42)
+    data = bus.read_i2c_block_data(BMM150_ADDR, DATA_X_LSB, 6)
+    
+    # Reconstruct 13-bit (X/Y) and 15-bit (Z) values
+    x = ((data[1] << 8) | data[0]) >> 3
+    y = ((data[3] << 8) | data[2]) >> 3
+    z = ((data[5] << 8) | data[4]) >> 1
+    
+    # Apply two's complement for negative values
+    if x > 4095: x -= 8192
+    if y > 4095: y -= 8192
+    if z > 16383: z -= 32768
+        
+    return x, y, z
+
+if __name__ == "__main__":
+    setup_sensor()
+    print("Reading magnetometer data... Press Ctrl+C to stop.")
+    
+    try:
+        while True:
+            x, y, z = read_raw_data()
+            print(f"X: {x:6d} | Y: {y:6d} | Z: {z:6d}")
+            time.sleep(0.2)
+            
+    except KeyboardInterrupt:
+        print("\nStopped by user.")
+        # Return sensor to sleep mode
+        bus.write_byte_data(BMM150_ADDR, POWER_CONTROL_REG, 0x00)
+
+
+//Execute the following script:
+
+python3 read_compass.py
