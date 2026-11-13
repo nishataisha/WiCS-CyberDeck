@@ -7,15 +7,15 @@
 
     <style>
         :root {
-            --background: #111714;
-            --surface: #19221d;
-            --surface-light: #202c25;
-            --border: #344239;
-            --accent: #a5b99c;
-            --accent-hover: #c0d0b7;
+            --background: #221428;
+            --surface: #22191f;
+            --surface-light: #2a202c;
+            --border: #3f3442;
+            --accent: #a89cb9;
+            --accent-hover: #cab7d0;
             --text: #edf1eb;
-            --muted: #9aa69b;
-            --success: #9fc5a1;
+            --muted: #a49aa6;
+            --success: #b09fc5;
             --danger: #c98e87;
         }
 
@@ -313,6 +313,53 @@
                 padding: 22px 18px;
             }
         }
+        .manual-frequency {
+            margin-top: 24px;
+        }
+
+        .manual-frequency label {
+            display: block;
+            color: var(--text);
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .manual-frequency-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .manual-frequency input {
+            flex: 1;
+            min-width: 0;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 12px;
+            color: var(--text);
+            font: inherit;
+        }
+
+        .manual-frequency input:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .manual-frequency-button {
+            background: var(--surface-light);
+            border: 1px solid var(--accent);
+            border-radius: 5px;
+            color: var(--accent);
+            padding: 0 22px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .manual-frequency-button:hover {
+            background: #29372e;
+        }
     </style>
 </head>
 
@@ -375,6 +422,34 @@
 
                 <div class="station-grid" id="fm-stations"></div>
 
+                <div class="manual-frequency">
+                    <label for="manual-fm-frequency">Manual FM Frequency</label>
+
+                    <div class="manual-frequency-controls">
+                        <input
+                            type="number"
+                            id="manual-fm-frequency"
+                            min="87.5"
+                            max="108.0"
+                            step="0.1"
+                            placeholder="e.g. 104.5"
+                        />
+
+                        <button
+                            type="button"
+                            class="manual-frequency-button"
+                            id="manual-fm-button"
+                        >
+                            SELECT
+                        </button>
+                    </div>
+
+                    <p class="section-description">
+                        Enter an FM frequency between 87.5 and 108.0 MHz.
+                    </p>
+                </div>
+
+
                 <div class="controls">
                     <button class="control-button play-button"
                             id="play-button" disabled>
@@ -410,7 +485,7 @@
             "162.550"
         ];
 
-        // Temporary FM frequencies for the software demo.
+        // FM preset frequencies
         const fmFrequencies = [
             "88.5",
             "91.3",
@@ -473,14 +548,16 @@
             });
         }
 
-        function selectStation(frequency, type, button) {
+        function selectStation(frequency, type, button = null) {
             selectedFrequency = frequency;
             selectedType = type;
 
             document.querySelectorAll(".station-button")
                 .forEach(btn => btn.classList.remove("active"));
 
-            button.classList.add("active");
+            if (button) {
+                button.classList.add("active");
+            }
 
             currentFrequency.textContent = frequency + " MHz";
             currentStation.textContent =
@@ -491,7 +568,9 @@
             playButton.disabled = false;
             stopButton.disabled = !isPlaying;
 
-            message.textContent = "Frequency selected. Press PLAY to tune.";
+            message.textContent = isPlaying
+                ? "New frequency selected. Press PLAY to switch stations."
+                : "Frequency selected. Press PLAY to tune.";
         }
 
         function updatePlaybackStatus(playing) {
@@ -558,6 +637,28 @@
         }
 
         playButton.addEventListener("click", playRadio);
+        const manualFrequencyInput =
+            document.getElementById("manual-fm-frequency");
+
+        const manualFrequencyButton =
+            document.getElementById("manual-fm-button");
+
+        manualFrequencyButton.addEventListener("click", () => {
+            const frequency = Number(manualFrequencyInput.value);
+
+            if (
+                manualFrequencyInput.value.trim() === "" ||
+                !Number.isFinite(frequency) ||
+                frequency < 87.5 ||
+                frequency > 108.0
+            ) {
+                message.textContent =
+                    "Enter a valid FM frequency between 87.5 and 108.0 MHz.";
+                return;
+            }
+
+            selectStation(frequency.toFixed(1), "FM");
+        });
         stopButton.addEventListener("click", stopRadio);
 
         createStationButtons(
