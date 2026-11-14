@@ -4,8 +4,11 @@ import subprocess
 import shutil
 import threading
 import time
+import math
+from sensor import setup_sensor, read_raw_data
 
 app = Flask(__name__)
+setup_sensor()
 
 current_station = None
 current_type = None
@@ -179,6 +182,48 @@ def stop():
         "status": "stopped",
         "station": current_station,
         "message": "Radio stopped."
+    })
+
+
+#calculate heading from X and Y
+def calculate_heading(x, y):
+    heading = math.degrees(math.atan2(y, x))
+    return (heading + 360) % 360
+
+
+#convert heading to compass direction
+def get_direction(heading):
+    directions = ["N", "NE", "E", "SE",
+                  "S", "SW", "W", "NW"]
+
+    index = round(heading / 45) % 8
+    return directions[index]
+
+
+@app.route("/compass")
+def compass_page():
+    return render_template("compass.html")
+
+
+@app.route("/api/compass", methods=["GET"])
+def compass():
+
+    # STEP 1: Get readings from the sensor
+    x, y, z = read_raw_data()
+
+    # STEP 2: Calculate heading
+    heading = calculate_heading(x, y)
+
+    # STEP 3: Determine direction
+    direction = get_direction(heading)
+
+    # STEP 4: Send results to HTML frontend
+    return jsonify({
+        "x": x,
+        "y": y,
+        "z": z,
+        "heading": round(heading, 1),
+        "direction": direction
     })
 
 
