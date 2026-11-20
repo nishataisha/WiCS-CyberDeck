@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Compass app icon</title>
+  <desc id="desc">A rough black compass with a deep red north needle on a gray-purple tile.</desc>
+  <rect x="6" y="4" width="148" height="148" rx="43" fill="#575566"/>
+  <g fill="none" stroke="#050505" stroke-linecap="round" stroke-linejoin="round" stroke-width="6">
+    <path d="M80 30c27 0 49 21 49 48 0 27-22 49-49 49-27 0-49-22-49-49 0-27 22-48 49-48z"/>
+    <path d="M80 37v7M80 112v8M38 78h7M115 78h7"/>
+  </g>
+  <g transform="rotate(35 80 78)">
+    <path d="M80 41L95 78H65z" fill="#5D1B1D" stroke="#050505" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M80 115L65 78h30z" fill="#050505" stroke="#050505" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+  <circle cx="80" cy="78" r="5" fill="#575566" stroke="#050505" stroke-width="3"/>
+</svg>
